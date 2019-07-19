@@ -1,8 +1,9 @@
 Pod::Spec.new do |s|
   s.name         = "FFCache"
   s.version      = "1.0.0"
+  s.swift_version = '4.2'
   s.summary      = "Fast Caching for Swift (Works with iOS)."
-  s.description  = "EGOCache is a simple, thread-safe key value cache store for macOS, iOS, tvOS and watchOS."
+  s.description  = "FFCache is a simple, thread-safe key value cache store for iOS."
   s.homepage     = "https://github.com/onefboy/FFCache"
   s.license      = { :type => "MIT", :file => "LICENSE" }
   s.author       = { 'onefboy' => 'onefboy@gmail.com' }
