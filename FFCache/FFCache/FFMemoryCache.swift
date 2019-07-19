@@ -8,7 +8,7 @@
 
 import UIKit
 
-class FFMemoryCache: NSObject, NSCacheDelegate {
+public class FFMemoryCache: NSObject, NSCacheDelegate {
   
   private var cache: NSCache<AnyObject, AnyObject>!
   private var totalCost: Int = 0// 限定缓存空间的最大内存 单位是字节Byte，超出上限会自动回收对象，默认值是0，表示没有限制

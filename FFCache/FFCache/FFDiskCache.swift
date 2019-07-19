@@ -8,7 +8,7 @@
 
 import UIKit
 
-class FFDiskCache: NSObject {
+public class FFDiskCache: NSObject {
   
   private var diskQueue: DispatchQueue!
   private var cachePath: String!

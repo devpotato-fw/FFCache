@@ -8,7 +8,7 @@
 
 import UIKit
 
-class FFCache: NSObject {
+public class FFCache: NSObject {
   
   private var queue: DispatchQueue!
   
