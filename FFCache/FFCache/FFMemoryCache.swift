@@ -15,7 +15,7 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
   private var totalCount: Int = 0// 限定了缓存最多维护的对象的个数。默认值为0，表示没有限制
   private var memoryQueue: DispatchQueue!
   
-  static let shared: FFMemoryCache = {
+  public static let shared: FFMemoryCache = {
     let memory = FFMemoryCache()
     memory.cache = NSCache()
     memory.cache.totalCostLimit = memory.totalCost
@@ -27,12 +27,12 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
   
   private override init() {}
   
-  func setTotalCost(_ cost: Int) {
+  public func setTotalCost(_ cost: Int) {
     totalCost = cost
     cache.totalCostLimit = totalCost
   }
   
-  func setTotalCount(_ count: Int) {
+  public func setTotalCount(_ count: Int) {
     totalCount = count
     cache.countLimit = totalCount
   }
@@ -45,14 +45,14 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
   }
   
   // MARK: - Public Asynchronous Methods
-  func removeAllObjects(_ block: @escaping ((FFMemoryCache) -> Void)) {
+  public func removeAllObjects(_ block: @escaping ((FFMemoryCache) -> Void)) {
     memoryQueue.async {
       self.cache.removeAllObjects()
       block(self)
     }
   }
   
-  func removeObject(forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
+  public func removeObject(forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
     memoryQueue.async {
       
       var object: Any?
@@ -66,7 +66,7 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
     }
   }
   
-  func object(forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
+  public func object(forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
     memoryQueue.async {
       var object: Any?
       
@@ -78,7 +78,7 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
     }
   }
   
-  func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
+  public func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
     memoryQueue.async {
       self.cache.setObject(object as AnyObject, forKey: key as AnyObject, cost: self.totalCost)
       block(self, key, object)
@@ -86,27 +86,27 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
   }
   
   // MARK: - Public Synchronous Methods
-  func removeAllObjects() {
+  public func removeAllObjects() {
     cache.removeAllObjects()
   }
   
-  func removeObject(forKey key: String) {
+  public func removeObject(forKey key: String) {
     cache.removeObject(forKey: key as AnyObject)
   }
   
-  func object(forKey key: String) -> Any? {
+  public func object(forKey key: String) -> Any? {
     if hasCache(forKey: key) {
       return cache.object(forKey: key as AnyObject)
     }
     return nil
   }
   
-  func setObject(_ object: Codable, forKey key: String) {
+  public func setObject(_ object: Codable, forKey key: String) {
     cache.setObject(object as AnyObject, forKey: key as AnyObject, cost: totalCost)
   }
   
   // MARK: - NSCacheDelegate
-  func cache(_ cache: NSCache<AnyObject, AnyObject>, willEvictObject obj: Any) {
+  private func cache(_ cache: NSCache<AnyObject, AnyObject>, willEvictObject obj: Any) {
     #if DEBUG
       print("FFMemoryCache：回收对象--------\(obj)");
     #else

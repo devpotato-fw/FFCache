@@ -13,7 +13,7 @@ public class FFCache: NSObject {
   private var queue: DispatchQueue!
   
   // MARK: - Initialization
-  static let shared: FFCache = {
+  public static let shared: FFCache = {
     let disk = FFCache()
     disk.queue = DispatchQueue(label: "com.onefboy.ffcache.cache", attributes: .concurrent)
     return disk
@@ -21,7 +21,7 @@ public class FFCache: NSObject {
   private override init() {}
   
   // MARK: - Public Asynchronous Methods
-  func removeAllObjects(_ block: @escaping ((FFCache) -> Void)) {
+  public func removeAllObjects(_ block: @escaping ((FFCache) -> Void)) {
     let group = DispatchGroup()
     group.enter()
     group.enter()
@@ -42,7 +42,7 @@ public class FFCache: NSObject {
     }
   }
   
-  func removeObject(forKey key: String, block: @escaping ((FFCache, String) -> Void)) {
+  public func removeObject(forKey key: String, block: @escaping ((FFCache, String) -> Void)) {
     let group = DispatchGroup()
     group.enter()
     group.enter()
@@ -63,7 +63,7 @@ public class FFCache: NSObject {
     }
   }
   
-  func object(forKey key: String, block: @escaping ((FFCache, String, Any?) -> Void)) {
+  public func object(forKey key: String, block: @escaping ((FFCache, String, Any?) -> Void)) {
     queue.async {
       FFMemoryCache.shared.object(forKey: key, block: { (cache, key, object) in
         if object != nil {
@@ -80,7 +80,7 @@ public class FFCache: NSObject {
     }
   }
   
-  func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFCache, String, Any?) -> Void)) {
+  public func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFCache, String, Any?) -> Void)) {
     let group = DispatchGroup.init()
     group.enter()
     group.enter()
@@ -102,7 +102,7 @@ public class FFCache: NSObject {
   }
   
   // MARK: - Public Synchronous Methods
-  func removeAllObjects() {
+  public func removeAllObjects() {
     let semaphore = DispatchSemaphore(value: 0)
     
     removeAllObjects { (cache) in
@@ -112,7 +112,7 @@ public class FFCache: NSObject {
     semaphore.wait()
   }
   
-  func removeObject(forKey key: String) {
+  public func removeObject(forKey key: String) {
     let semaphore = DispatchSemaphore(value: 0)
     
     removeObject(forKey: key) { (cache, key) in
@@ -122,7 +122,7 @@ public class FFCache: NSObject {
     semaphore.wait()
   }
   
-  func object(forKey key: String) -> Any? {
+  public func object(forKey key: String) -> Any? {
     var tempObject: Any?
     let semaphore = DispatchSemaphore(value: 0)
     
@@ -136,7 +136,7 @@ public class FFCache: NSObject {
     return tempObject
   }
   
-  func setObject(_ object: Codable, forKey key: String) {
+  public func setObject(_ object: Codable, forKey key: String) {
     let semaphore = DispatchSemaphore(value: 0)
     
     setObject(object, forKey: key) { (cache, key, object) in

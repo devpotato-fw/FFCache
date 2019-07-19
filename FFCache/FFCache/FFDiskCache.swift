@@ -14,7 +14,7 @@ public class FFDiskCache: NSObject {
   private var cachePath: String!
   private let FFDiskCacheName = "FFDiskCache"
   
-  static let shared: FFDiskCache = {
+  public static let shared: FFDiskCache = {
     let disk = FFDiskCache()
     disk.diskQueue = DispatchQueue(label: "com.onefboy.ffcache.disk")
     
@@ -29,7 +29,7 @@ public class FFDiskCache: NSObject {
   private override init() {}
   
   // MARK: - Public Asynchronous Methods
-  func removeAllObjects(_ block: @escaping ((FFDiskCache) -> Void)) {
+  public func removeAllObjects(_ block: @escaping ((FFDiskCache) -> Void)) {
     diskQueue.async {
       if FileManager.default.fileExists(atPath: self.cachePath) {
         let filePath = "file://" + self.cachePath
@@ -60,7 +60,7 @@ public class FFDiskCache: NSObject {
     }
   }
   
-  func removeObject(forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
+  public func removeObject(forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
     diskQueue.async {
       var object: Any?
       if self.hasCache(forKey: key) {
@@ -178,7 +178,7 @@ public class FFDiskCache: NSObject {
     }
   }
   
-  func object(forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
+  public func object(forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
     data(forKey: key) { (cache, key, data) in
       var object: Any?
       
@@ -201,7 +201,7 @@ public class FFDiskCache: NSObject {
     }
   }
   
-  func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
+  public func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
 //    do {
       let data = NSKeyedArchiver.archivedData(withRootObject: object)
 //      let data = try NSKeyedArchiver.archivedData(withRootObject: object, requiringSecureCoding: false)
@@ -216,7 +216,7 @@ public class FFDiskCache: NSObject {
   }
   
   // MARK: - Public Synchronous Methods
-  func removeAllObjects() {
+  public func removeAllObjects() {
     let semaphore = DispatchSemaphore(value: 0)
     
     removeAllObjects { (cache) in
@@ -226,7 +226,7 @@ public class FFDiskCache: NSObject {
     semaphore.wait()
   }
   
-  func removeObject(forKey key: String) {
+  public func removeObject(forKey key: String) {
     let semaphore = DispatchSemaphore(value: 0)
     
     removeObject(forKey: key) { (cache, key, object) in
@@ -261,7 +261,7 @@ public class FFDiskCache: NSObject {
     semaphore.wait()
   }
 
-  func object(forKey key: String) -> Any? {
+  public func object(forKey key: String) -> Any? {
     var tempObject: Data?
     
     let semaphore = DispatchSemaphore(value: 0)
@@ -276,7 +276,7 @@ public class FFDiskCache: NSObject {
     return tempObject
   }
   
-  func setObject(_ object: Codable, forKey key: String) {
+  public func setObject(_ object: Codable, forKey key: String) {
     let semaphore = DispatchSemaphore(value: 0)
     
     setObject(object, forKey: key) { (cache, key, object) in
