@@ -2,7 +2,7 @@
 //  FFMemoryCache.swift
 //  FFCache
 //
-//  Created by json.wang on 2019/3/19.
+//  Created by onefboy on 2019/3/19.
 //  Copyright © 2019年 onefboy. All rights reserved.
 //
 
@@ -45,40 +45,37 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
   }
   
   // MARK: - Public Asynchronous Methods
-  public func removeAllObjects(_ block: @escaping ((FFMemoryCache) -> Void)) {
+  public func removeAllObjectsAsync(_ block: @escaping ((FFMemoryCache) -> Void)) {
     memoryQueue.async {
       self.cache.removeAllObjects()
       block(self)
     }
   }
   
-  public func removeObject(forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
+  public func removeObjectAsync(forKey key: String, block: @escaping ((FFMemoryCache, String) -> Void)) {
     memoryQueue.async {
-      
-      var object: Any?
-      
-      if self.hasCache(forKey: key) {
-        object = self.cache.object(forKey: key as AnyObject) as Any
-      }
       self.cache.removeObject(forKey: key as AnyObject)
-      
-      block(self, key, object)
+      block(self, key)
     }
   }
   
-  public func object(forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
+  public func objectAsync<T: Codable>(forKey key: String, ofType type: T.Type, block: @escaping ((FFMemoryCache, String, T?) -> Void)) {
     memoryQueue.async {
-      var object: Any?
-      
-      if self.hasCache(forKey: key) {
-        object = self.cache.object(forKey: key as AnyObject) as Any
+      if !self.hasCache(forKey: key) {
+        block(self, key, nil)
+        return
       }
       
-      block(self, key, object)
+      if let object = self.cache.object(forKey: key as AnyObject) as? T {
+        block(self, key, object)
+        return
+      }
+      
+      block(self, key, nil)
     }
   }
   
-  public func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFMemoryCache, String, Any?) -> Void)) {
+  public func setObjectAsync<T: Codable>(_ object: T, forKey key: String, block: @escaping ((FFMemoryCache, String, T?) -> Void)) {
     memoryQueue.async {
       self.cache.setObject(object as AnyObject, forKey: key as AnyObject, cost: self.totalCost)
       block(self, key, object)
@@ -94,21 +91,24 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
     cache.removeObject(forKey: key as AnyObject)
   }
   
-  public func object(forKey key: String) -> Any? {
-    if hasCache(forKey: key) {
-      return cache.object(forKey: key as AnyObject)
+  public func object<T: Codable>(forKey key: String, ofType type: T.Type) -> T? {
+    if !self.hasCache(forKey: key) {
+      return nil
+    }
+    if let object = self.cache.object(forKey: key as AnyObject) as? T {
+      return object
     }
     return nil
   }
   
-  public func setObject(_ object: Codable, forKey key: String) {
+  public func setObject<T: Codable>(_ object: T, forKey key: String) {
     cache.setObject(object as AnyObject, forKey: key as AnyObject, cost: totalCost)
   }
   
   // MARK: - NSCacheDelegate
   private func cache(_ cache: NSCache<AnyObject, AnyObject>, willEvictObject obj: Any) {
     #if DEBUG
-      print("FFMemoryCache：回收对象--------\(obj)");
+      print("FFMemoryCache：Free--------\(obj)");
     #else
       // TODO
     #endif

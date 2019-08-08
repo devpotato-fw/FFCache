@@ -2,7 +2,7 @@
 //  FFCache.swift
 //  FFCache
 //
-//  Created by json.wang on 2019/3/19.
+//  Created by onefboy on 2019/3/19.
 //  Copyright © 2019年 onefboy. All rights reserved.
 //
 
@@ -21,17 +21,17 @@ public class FFCache: NSObject {
   private override init() {}
   
   // MARK: - Public Asynchronous Methods
-  public func removeAllObjects(_ block: @escaping ((FFCache) -> Void)) {
+  public func removeAllObjectsAsync(_ block: @escaping ((FFCache) -> Void)) {
     let group = DispatchGroup()
     group.enter()
     group.enter()
     let workItem1 = DispatchWorkItem.init {
-      FFMemoryCache.shared.removeAllObjects({ (cache) in
+      FFMemoryCache.shared.removeAllObjectsAsync({ (cache) in
         group.leave()
       })
     }
     let workItem2 = DispatchWorkItem.init {
-      FFDiskCache.shared.removeAllObjects({ (cache) in
+      FFDiskCache.shared.removeAllObjectsAsync({ (cache) in
         group.leave()
       })
     }
@@ -42,17 +42,17 @@ public class FFCache: NSObject {
     }
   }
   
-  public func removeObject(forKey key: String, block: @escaping ((FFCache, String) -> Void)) {
+  public func removeObjectAsync(forKey key: String, block: @escaping ((FFCache, String) -> Void)) {
     let group = DispatchGroup()
     group.enter()
     group.enter()
     let workItem1 = DispatchWorkItem.init {
-      FFMemoryCache.shared.removeObject(forKey: key, block: { (cache, key, object) in
+      FFMemoryCache.shared.removeObjectAsync(forKey: key, block: { (cache, key) in
         group.leave()
       })
     }
     let workItem2 = DispatchWorkItem.init {
-      FFDiskCache.shared.removeObject(forKey: key, block: { (cache, key, object) in
+      FFDiskCache.shared.removeObjectAsync(forKey: key, block: { (cache, key) in
         group.leave()
       })
     }
@@ -63,15 +63,15 @@ public class FFCache: NSObject {
     }
   }
   
-  public func object(forKey key: String, block: @escaping ((FFCache, String, Any?) -> Void)) {
+  public func objectAsync<T: Codable>(forKey key: String, ofType type: T.Type, block: @escaping ((FFCache, String, T?) -> Void)) {
     queue.async {
-      FFMemoryCache.shared.object(forKey: key, block: { (cache, key, object) in
+      FFMemoryCache.shared.objectAsync(forKey: key, ofType: type, block: { (cache, key, object) in
         if object != nil {
           block(self, key, object)
         } else {
-          FFDiskCache.shared.object(forKey: key, block: { (cache, key, object) in
+          FFDiskCache.shared.objectAsync(forKey: key, ofType: type, block: { (cache, key, object) in
             if object != nil {
-              FFMemoryCache.shared.setObject(object as! Codable, forKey: key)
+              FFMemoryCache.shared.setObject(object, forKey: key)
             }
             block(self, key, object)
           })
@@ -80,17 +80,17 @@ public class FFCache: NSObject {
     }
   }
   
-  public func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFCache, String, Any?) -> Void)) {
+  public func setObjectAsync<T: Codable>(_ object: T, forKey key: String, block: @escaping ((FFCache, String, T?) -> Void)) {
     let group = DispatchGroup.init()
     group.enter()
     group.enter()
     let workItem1 = DispatchWorkItem.init {
-      FFMemoryCache.shared.setObject(object, forKey: key, block: { (cache, key, object) in
+      FFMemoryCache.shared.setObjectAsync(object, forKey: key, block: { (cache, key, object) in
         group.leave()
       })
     }
     let workItem2 = DispatchWorkItem.init {
-      FFDiskCache.shared.setObject(object, forKey: key, block: { (cache, key, object) in
+      FFDiskCache.shared.setObjectAsync(object, forKey: key, block: { (cache, key, object) in
         group.leave()
       })
     }
@@ -105,7 +105,7 @@ public class FFCache: NSObject {
   public func removeAllObjects() {
     let semaphore = DispatchSemaphore(value: 0)
     
-    removeAllObjects { (cache) in
+    removeAllObjectsAsync { (cache) in
       semaphore.signal()
     }
     
@@ -115,18 +115,18 @@ public class FFCache: NSObject {
   public func removeObject(forKey key: String) {
     let semaphore = DispatchSemaphore(value: 0)
     
-    removeObject(forKey: key) { (cache, key) in
+    removeObjectAsync(forKey: key) { (cache, key) in
       semaphore.signal()
     }
     
     semaphore.wait()
   }
   
-  public func object(forKey key: String) -> Any? {
-    var tempObject: Any?
+  public func object<T: Codable>(forKey key: String, ofType type: T.Type) -> T? {
+    var tempObject: T?
     let semaphore = DispatchSemaphore(value: 0)
     
-    object(forKey: key) { (cache, key, object) in
+    objectAsync(forKey: key, ofType: type) { (cache, key, object) in
       tempObject = object
       semaphore.signal()
     }
@@ -136,10 +136,10 @@ public class FFCache: NSObject {
     return tempObject
   }
   
-  public func setObject(_ object: Codable, forKey key: String) {
+  public func setObject<T: Codable>(_ object: T, forKey key: String) {
     let semaphore = DispatchSemaphore(value: 0)
     
-    setObject(object, forKey: key) { (cache, key, object) in
+    setObjectAsync(object, forKey: key) { (cache, key, object) in
       semaphore.signal()
     }
     

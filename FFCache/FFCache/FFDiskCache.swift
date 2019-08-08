@@ -2,7 +2,7 @@
 //  FFDiskCache.swift
 //  FFCache
 //
-//  Created by json.wang on 2019/3/19.
+//  Created by onefboy on 2019/3/19.
 //  Copyright © 2019年 onefboy. All rights reserved.
 //
 
@@ -29,7 +29,7 @@ public class FFDiskCache: NSObject {
   private override init() {}
   
   // MARK: - Public Asynchronous Methods
-  public func removeAllObjects(_ block: @escaping ((FFDiskCache) -> Void)) {
+  public func removeAllObjectsAsync(_ block: @escaping ((FFDiskCache) -> Void)) {
     diskQueue.async {
       if FileManager.default.fileExists(atPath: self.cachePath) {
         let filePath = "file://" + self.cachePath
@@ -40,7 +40,6 @@ public class FFDiskCache: NSObject {
           #else
           // TODO
           #endif
-        
           block(self)
           return
         }
@@ -49,7 +48,7 @@ public class FFDiskCache: NSObject {
           try FileManager.default.removeItem(at: url)
         } catch let error as NSError {
           #if DEBUG
-            print("FFDiskCache Error: \(error.domain)")
+            print("FFDiskCache removeAllObjectsAsync: \(error)")
           #else
           // TODO
           #endif
@@ -60,52 +59,14 @@ public class FFDiskCache: NSObject {
     }
   }
   
-  public func removeObject(forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
+  public func removeObjectAsync(forKey key: String, block: @escaping ((FFDiskCache, String) -> Void)) {
     diskQueue.async {
-      var object: Any?
       if self.hasCache(forKey: key) {
-        let filePath = "file://" + self.cachePath + "/\(key).plist"
-        
-        guard let url = URL(string: filePath) else {
-          #if DEBUG
-            print("FFDiskCache PathError: \(filePath)")
-          #else
-          // TODO
-          #endif
-          block(self, key, object)
-          return
-        }
-        
-        var data: Data?
-        do {
-          data = try Data(contentsOf: url)
-        } catch let error as NSError {
-          #if DEBUG
-            print("FFDiskCache Error: \(error.domain)")
-          #else
-          // TODO
-          #endif
-        }
-        
-        guard let tempData = data else {
-          block(self, key, object)
-          return
-        }
-        do {
-          object = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(tempData)
-        } catch let error as NSError {
-          #if DEBUG
-            print("FFDiskCache Error: \(error.domain)")
-          #else
-          // TODO
-          #endif
-        }
-        
         do {
           try FileManager.default.removeItem(atPath: self.cachePath + "/\(key).plist")
         } catch let error as NSError {
           #if DEBUG
-            print("FFDiskCache Error: \(error.domain)")
+            print("FFDiskCache removeObjectAsync: \(error)")
           #else
           // TODO
           #endif
@@ -114,7 +75,7 @@ public class FFDiskCache: NSObject {
         print("FFDiskCache Error: File not Exist")
       }
       
-      block(self, key, object)
+      block(self, key)
     }
   }
   
@@ -131,7 +92,7 @@ public class FFDiskCache: NSObject {
           #else
           // TODO
           #endif
-          block(self, key, data)
+          block(self, key, nil)
           return
         }
         
@@ -139,10 +100,12 @@ public class FFDiskCache: NSObject {
           data = try Data(contentsOf: url)
         } catch let error as NSError {
           #if DEBUG
-            print("FFDiskCache Error: \(error.domain)")
+            print("FFDiskCache Error: \(error)")
           #else
           // TODO
           #endif
+          block(self, key, nil)
+          return
         }
       }
       
@@ -156,11 +119,10 @@ public class FFDiskCache: NSObject {
       
       guard let url = URL(string: filePath) else {
         #if DEBUG
-            print("FFDiskCache PathError: \(filePath)")
-          #else
-          // TODO
-          #endif
-        block(self, key, data)
+          print("FFDiskCache PathError: \(filePath)")
+        #else
+        // TODO
+        #endif
         return
       }
       
@@ -168,58 +130,82 @@ public class FFDiskCache: NSObject {
         try data.write(to: url, options: .atomicWrite)
       } catch let error as NSError {
         #if DEBUG
-            print("FFDiskCache Error: \(error.domain)")
-          #else
-          // TODO
-          #endif
+          print("FFDiskCache Error: \(error)")
+        #else
+        // TODO
+        #endif
+        return
       }
       
       block(self, key, data)
     }
   }
   
-  public func object(forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
+  public func objectAsync<T: Codable>(forKey key: String, ofType type: T.Type, block: @escaping ((FFDiskCache, String, T?) -> Void)) {
     data(forKey: key) { (cache, key, data) in
-      var object: Any?
+      var object: T?
       
       guard let tempData = data else {
-        block(self, key, object)
+        block(self, key, nil)
         return
       }
       
       do {
-        object = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(tempData)
+        let decoder = JSONDecoder()
+        object = try decoder.decode(T.self, from: tempData)
       } catch let error as NSError {
-        #if DEBUG
-            print("FFDiskCache Error: \(error.domain)")
+//        #if DEBUG
+//        print("FFDiskCache objectAsync: \(error)")
+//        #else
+//        // TODO
+//        #endif
+//        block(self, key, nil)
+//        return
+        
+        do {
+          if let temp = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(tempData) as? T {
+            object = temp
+          }
+        } catch let error as NSError {
+          #if DEBUG
+          print("FFDiskCache objectAsync: \(error.domain)")
           #else
           // TODO
           #endif
+        }
       }
       
       block(self, key, object)
     }
   }
   
-  public func setObject(_ object: Codable, forKey key: String, block: @escaping ((FFDiskCache, String, Any?) -> Void)) {
-//    do {
-      let data = NSKeyedArchiver.archivedData(withRootObject: object)
-//      let data = try NSKeyedArchiver.archivedData(withRootObject: object, requiringSecureCoding: false)
-      
+  public func setObjectAsync<T: Codable>(_ object: T, forKey key: String, block: @escaping ((FFDiskCache, String, T?) -> Void)) {
+    do {
+      let encoder = JSONEncoder()
+      let data = try encoder.encode(object)
       setData(data, forKey: key) { (cache, key, data) in
         block(self, key, object)
       }
-//    } catch let error as NSError {
-//            print("FFDiskCache Error: \(error.domain)")
-//      block(self, key, object)
-//    }
+    } catch let error as NSError {
+//      #if DEBUG
+//      print("FFDiskCache setObjectAsync: \(error)")
+//      #else
+//      // TODO
+//      #endif
+//      block(self, key, nil)
+      
+      let data = NSKeyedArchiver.archivedData(withRootObject: object)
+      setData(data, forKey: key) { (cache, key, data) in
+        block(self, key, object)
+      }
+    }
   }
   
   // MARK: - Public Synchronous Methods
   public func removeAllObjects() {
     let semaphore = DispatchSemaphore(value: 0)
     
-    removeAllObjects { (cache) in
+    removeAllObjectsAsync { (cache) in
       semaphore.signal()
     }
     
@@ -229,44 +215,19 @@ public class FFDiskCache: NSObject {
   public func removeObject(forKey key: String) {
     let semaphore = DispatchSemaphore(value: 0)
     
-    removeObject(forKey: key) { (cache, key, object) in
-      semaphore.signal()
-    }
-    
-    semaphore.wait()
-  }
-  
-  private func data(forKey key: String) -> Data? {
-    var tempData: Data?
-    
-    let semaphore = DispatchSemaphore(value: 0)
-    
-    data(forKey: key) { (cache, key, data) in
-      tempData = data
-      semaphore.signal()
-    }
-    
-    semaphore.wait()
-    
-    return tempData
-  }
-  
-  private func setData(_ data: Data, forKey key: String) {
-    let semaphore = DispatchSemaphore(value: 0)
-    
-    setData(data, forKey: key) { (cache, key, data) in
+    removeObjectAsync(forKey: key) { (cache, key) in
       semaphore.signal()
     }
     
     semaphore.wait()
   }
 
-  public func object(forKey key: String) -> Any? {
-    var tempObject: Data?
+  public func object<T: Codable>(forKey key: String, ofType type: T.Type) -> T? {
+    var tempObject: T?
     
     let semaphore = DispatchSemaphore(value: 0)
     
-    data(forKey: key) { (cache, key, object) in
+    objectAsync(forKey: key, ofType: type) { (cache, key, object) in
       tempObject = object
       semaphore.signal()
     }
@@ -276,10 +237,10 @@ public class FFDiskCache: NSObject {
     return tempObject
   }
   
-  public func setObject(_ object: Codable, forKey key: String) {
+  public func setObject<T: Codable>(_ object: T, forKey key: String) {
     let semaphore = DispatchSemaphore(value: 0)
     
-    setObject(object, forKey: key) { (cache, key, object) in
+    setObjectAsync(object, forKey: key) { (cache, key, object) in
       semaphore.signal()
     }
     
@@ -293,7 +254,7 @@ public class FFDiskCache: NSObject {
         try FileManager.default.createDirectory(atPath: cachePath, withIntermediateDirectories: true, attributes: nil)
       } catch let error as NSError {
         #if DEBUG
-            print("FFDiskCache Error: \(error.domain)")
+            print("FFDiskCache createCacheDirectory: \(error)")
           #else
           // TODO
           #endif

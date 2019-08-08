@@ -11,7 +11,7 @@ Swift 缓存框架
 
 ### CocoaPods
 
-1. 在 Podfile 中添加 `pod 'FFCache', '~> 1.0.2'`。
+1. 在 Podfile 中添加 `pod 'FFCache', '~> 1.0.3'`。
 2. 执行 `pod install` 或 `pod update`。
 3. 导入 FFCache。
 
