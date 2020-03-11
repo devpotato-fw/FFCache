@@ -6,6 +6,47 @@ FFCache
 
 Swift 缓存框架
 
+使用说明
+==============
+
+### 基本数据类型
+
+```swift
+FFCache.shared.setObject(1024, forKey: "int")
+let num = FFCache.shared.object(forKey: "int", ofType: Int.self)
+```
+
+### 字符串
+
+```swift
+FFCache.shared.setObject("哈哈", forKey: "string")
+let string = FFCache.shared.object(forKey: "string", ofType: String.self)
+```
+
+### 自定义对象
+
+```swift
+let person = Person()
+
+FFCache.shared.setObject(person, forKey: "person")
+
+let data = FFCache.shared.object(forKey: "person", ofType: Person.self)
+```
+
+### 数组
+
+```swift
+FFCache.shared.setObject([person, person], forKey: "array")
+let array = FFCache.shared.object(forKey: "array", ofType: [Person].self)
+```
+
+### 字典
+
+```swift
+FFCache.shared.setObject(["name": "onefboy"], forKey: "dict")
+let dict = FFCache.shared.object(forKey: "dict", ofType: [String: String].self)
+```
+
 安装
 ==============
 

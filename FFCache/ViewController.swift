@@ -14,18 +14,23 @@ class ViewController: UIViewController {
     super.viewDidLoad()
     // Do any additional setup after loading the view, typically from a nib.
     // Synchronous Methods
-    let person = Person()
-    person.name = "onefboy"
-    person.age = 24
+    // 基本数据类型
+    FFCache.shared.setObject(1024, forKey: "int")
+    if let num = FFCache.shared.object(forKey: "int", ofType: Int.self) {
+      print("num = \(num)")
+    }
     
     // 字符串
     FFCache.shared.setObject("哈哈", forKey: "string")
-    
     if let string = FFCache.shared.object(forKey: "string", ofType: String.self) {
       print("string = " + string)
     }
     
     // 自定义对象
+    let person = Person()
+    person.name = "onefboy"
+    person.age = 24
+    
     FFCache.shared.setObject(person, forKey: "person")
     
     if let person = FFCache.shared.object(forKey: "person", ofType: Person.self) {
@@ -38,8 +43,6 @@ class ViewController: UIViewController {
     if let array = FFCache.shared.object(forKey: "array", ofType: [Person].self) {
       print(array)
     }
-    
-    FFCache.shared.setObject(["person", "person"], forKey: "strarray")
     
     // 字典
     FFCache.shared.setObject(["name": "onefboy"], forKey: "dict")

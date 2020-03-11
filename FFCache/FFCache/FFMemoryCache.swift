@@ -106,7 +106,7 @@ public class FFMemoryCache: NSObject, NSCacheDelegate {
   }
   
   // MARK: - NSCacheDelegate
-  private func cache(_ cache: NSCache<AnyObject, AnyObject>, willEvictObject obj: Any) {
+  public func cache(_ cache: NSCache<AnyObject, AnyObject>, willEvictObject obj: Any) {
     #if DEBUG
       print("FFMemoryCache：Free--------\(obj)");
     #else

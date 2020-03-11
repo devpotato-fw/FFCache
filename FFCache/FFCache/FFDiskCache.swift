@@ -153,7 +153,7 @@ public class FFDiskCache: NSObject {
       do {
         let decoder = JSONDecoder()
         object = try decoder.decode(T.self, from: tempData)
-      } catch let error as NSError {
+      } catch _ as NSError {
 //        #if DEBUG
 //        print("FFDiskCache objectAsync: \(error)")
 //        #else
@@ -186,7 +186,7 @@ public class FFDiskCache: NSObject {
       setData(data, forKey: key) { (cache, key, data) in
         block(self, key, object)
       }
-    } catch let error as NSError {
+    } catch _ as NSError {
 //      #if DEBUG
 //      print("FFDiskCache setObjectAsync: \(error)")
 //      #else
