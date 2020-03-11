@@ -52,7 +52,7 @@ let dict = FFCache.shared.object(forKey: "dict", ofType: [String: String].self)
 
 ### CocoaPods
 
-1. 在 Podfile 中添加 `pod 'FFCache', '~> 1.0.3'`。
+1. 在 Podfile 中添加 `pod 'FFCache', '~> 1.0.4'`。
 2. 执行 `pod install` 或 `pod update`。
 3. 导入 FFCache。
 
